@@ -5,16 +5,16 @@ from discord.ext.commands import Bot
 from discord import Game
 import asyncio
 
-TOKEN = 'NTE1NDc4ODkxNzYzMjA0MTA4.Dt1tEQ.bU4zVUsWcyhbggCtGcoDYTMWAAY'
+TOKEN = ''
 client = Bot(command_prefix='!')
 memechannel = 0
 run = False
 
 ############################### REDDIT #########################################
 
-reddit = praw.Reddit(client_id='5X47U78wnnywVQ',
-                     client_secret='dK21VsU4fB1Qpp6kAj55eG2qQDw',
-                     user_agent='iamkolja')
+reddit = praw.Reddit(client_id='',
+                     client_secret='',
+                     user_agent='')
 
 subreddit = reddit.subreddit('me_irl')
 
