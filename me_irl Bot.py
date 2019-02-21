@@ -5,16 +5,16 @@ from discord.ext.commands import Bot
 from discord import Game
 import asyncio
 
-TOKEN = ''
+TOKEN = 'DISCORD_TOKEN'
 client = Bot(command_prefix='!')
 memechannel = 0
 run = False
 
 ############################### REDDIT #########################################
 
-reddit = praw.Reddit(client_id='',
-                     client_secret='',
-                     user_agent='')
+reddit = praw.Reddit(client_id='REDDIT_ID',
+                     client_secret='REDDIT_SECRET',
+                     user_agent='REDDIT_USERNAME')
 
 subreddit = reddit.subreddit('me_irl')
 
@@ -46,10 +46,13 @@ async def help(ctx):
                     value='deletes a specific amount of messages',
                     inline=True)
     embed.add_field(name=client.command_prefix + 'setchannel',
-                    value='sets the memechannel and starts posting',
+                    value='starts automatic meme broadcast',
                     inline=True)
     embed.add_field(name=client.command_prefix + 'post',
                     value='posts the hottest submission',
+                    inline=True)
+    embed.add_field(name=client.command_prefix + 'stop',
+                    value='stops automatic meme broadcast',
                     inline=True)
     embed.set_footer(text="very helpful right?")
 
@@ -68,10 +71,14 @@ async def ping(ctx):
                 description='lets u change the prefix!',
                 aliases=['p'],
                 pass_context=True)
-async def prefix(ctx, newprefix=client.command_prefix):
-    client.command_prefix = newprefix
-    await client.say('prefix is now: ' + client.command_prefix)
-    await client.change_presence(game=Game(name=client.command_prefix + "help"))
+async def prefix(ctx, newprefix='!'):
+    isAuthor = ctx.message.author.server_permissions.administrator
+    if isAuthor:
+        client.command_prefix = newprefix
+        await client.say('prefix is now: ' + client.command_prefix)
+        await client.change_presence(game=Game(name=client.command_prefix + "help"))
+    else:
+        await client.say('you don\'t have admin rights')
 
 ## COMMAND TO DELETE MESSAGES
 @client.command(name='clear',
@@ -80,11 +87,15 @@ async def prefix(ctx, newprefix=client.command_prefix):
                 pass_context=True)
 async def clear(ctx, amount=100):
     channel = ctx.message.channel
-    messages = []
-    async for message in client.logs_from(channel, limit=int(amount)):
-        messages.append(message)
-    await client.delete_messages(messages)
-    await client.say( str(amount) + ' messages deleted')
+    isAuthor = ctx.message.author.server_permissions.administrator
+    if isAuthor:
+        messages = []
+        async for message in client.logs_from(channel, limit=int(amount)):
+            messages.append(message)
+        await client.delete_messages(messages)
+        await client.say( str(amount) + ' messages deleted')
+    else:
+        await client.say('you don\'t have admin rights')
 
 ## COMMAND TO SET MEMECHANNEL
 @client.command(name='setchannel',
@@ -96,29 +107,38 @@ async def setchannel(ctx):
     run = True
     tmp = 0
     memechannel = ctx.message.channel
-    await client.say('this is the new memechannel!')
-    while not client.is_closed and run == True:
-        for submission in subreddit.hot(limit=2):
-            if submission.id != '80ib9u' and submission.id != tmp:
-                await client.send_message(memechannel,
-                                          'new hottest meme on r/me_irl:')
-                await client.send_message(memechannel, submission.title)
-                await client.send_message(memechannel, submission.url)
-                tmp = submission.id
-        print('subreddit visited!')
-        await asyncio.sleep(400)
+    isAuthor = ctx.message.author.server_permissions.administrator
+    if isAuthor:
+        await client.say('this is the new memechannel!')
+        while not client.is_closed and run == True:
+            for submission in subreddit.hot(limit=2):
+                if submission.id != '80ib9u' and submission.id != tmp:
+                    await client.send_message(memechannel, submission.title)
+                    await client.send_message(memechannel, submission.url)
+                    tmp = submission.id
+            print('subreddit visited!')
+            await asyncio.sleep(400)
+    else:
+        await client.say('you don\'t have admin rights')
 
 ## COMMAND TO STOP POST BOT (SEE SETCHANNEL)
-@client.command()
-async def stop():
+@client.command(name='stop',
+                description='stops automatic meme broadcast',
+                aliases=[],
+                pass_context=True)
+async def stop(ctx):
     global run
-    if run == True:
-        await client.say('sadly u stopped the postbot')
-        run = False
-        print("run: " + str(run))
+    isAuthor = ctx.message.author.server_permissions.administrator
+    if isAuthor:
+        if run == True:
+            await client.say('you stopped the postbot')
+            run = False
+            print("run: " + str(run))
+        else:
+            await client.say('postbot isn\'t even running')
+            print('run now is: ' + str(run))
     else:
-        await client.say('postbot isnt even running u dumb sh*t')
-        print('run now is: ' + str(run))
+        await client.say('you don\'t have admin rights')
 
 ## COMMAND TO POST THE HOTTEST POST IN ME_IRL
 @client.command(name='post',
@@ -136,8 +156,5 @@ async def post(ctx):
 async def on_ready():
     await client.change_presence(game=Game(name=client.command_prefix + "help"))
     print("logged in as " + client.user.name)
-
-##League of Legends 5er Team Combo Detecter
-
 
 client.run(TOKEN)
