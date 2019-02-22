@@ -12,9 +12,9 @@ run = False
 
 ############################### REDDIT #########################################
 
-reddit = praw.Reddit(client_id='REDDIT_ID',
-                     client_secret='REDDIT_SECRET',
-                     user_agent='REDDIT_USERNAME')
+reddit = praw.Reddit(client_id='',
+                     client_secret='',
+                     user_agent='')
 
 subreddit = reddit.subreddit('me_irl')
 
@@ -104,11 +104,12 @@ async def clear(ctx, amount=100):
                 pass_context=True)
 async def setchannel(ctx):
     global run
-    run = True
     tmp = 0
     memechannel = ctx.message.channel
     isAuthor = ctx.message.author.server_permissions.administrator
-    if isAuthor:
+    if isAuthor and run == False:
+        run = True
+        await client.change_presence(game=Game(name=client.command_prefix + "help | running"))
         await client.say('this is the new memechannel!')
         while not client.is_closed and run == True:
             for submission in subreddit.hot(limit=2):
@@ -119,7 +120,7 @@ async def setchannel(ctx):
             print('subreddit visited!')
             await asyncio.sleep(400)
     else:
-        await client.say('you don\'t have admin rights')
+        await client.say('you don\'t have admin rights or the bot is already doing its sh*t!')
 
 ## COMMAND TO STOP POST BOT (SEE SETCHANNEL)
 @client.command(name='stop',
@@ -131,6 +132,7 @@ async def stop(ctx):
     isAuthor = ctx.message.author.server_permissions.administrator
     if isAuthor:
         if run == True:
+            await client.change_presence(game=Game(name=client.command_prefix + "help"))
             await client.say('you stopped the postbot')
             run = False
             print("run: " + str(run))
