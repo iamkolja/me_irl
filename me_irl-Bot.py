@@ -35,8 +35,6 @@ async def set(ctx):
         channel = ctx.message.channel
         pickle.dump(channel.id, open("channel.obj", "wb"))
         await ctx.send("Broadcast started!", delete_after=5)
-        print("Broadcast started on " + str(channel) + " #" + str(channel.id))
-        await bot.change_presence(activity=discord.Game(name='me_irl broadcast'))
         await ctx.message.delete(delay=5)
         await broadcast()
     else:
@@ -52,8 +50,6 @@ async def unset(ctx):
         isSet = False
         os.remove("channel.obj")
         await ctx.send("Broadcast stopped!", delete_after=5)
-        print("Broadcast stopped!")
-        await bot.change_presence(activity=None)
         await ctx.message.delete(delay=5)
     else:
         await ctx.send("Bot is not broadcasting!", delete_after=5)
@@ -81,12 +77,13 @@ async def on_ready():
         channel = bot.get_channel(pickle.load(open("channel.obj", "rb")))
         tempID = pickle.load(open("tempID.obj", "rb"))
         print("Found old session!")
-        print("Broadcast started on " + str(channel) + " #" + str(channel.id))
         await broadcast()
 
 ## BROADCAST FUNCTION
 async def broadcast():
     global tempID
+    print("Broadcast started on " + str(channel) + " #" + str(channel.id))
+    await bot.change_presence(activity=discord.Game(name='me_irl broadcast'))
     while isSet:
         for submission in subreddit.hot(limit=1):
             if submission.id != tempID:
@@ -98,5 +95,7 @@ async def broadcast():
             else:
                 print("----- " + str(time.ctime()) + " -----")
         await asyncio.sleep(60)
+    print("Broadcast stopped!")
+    await bot.change_presence(activity=None)
 
 bot.run(token)
